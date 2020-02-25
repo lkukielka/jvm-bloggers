@@ -1,19 +1,23 @@
 package com.jvm_bloggers.core.social.twitter;
 
+import com.google.common.collect.ImmutableList;
 import com.jvm_bloggers.core.blogpost_redirect.LinkGenerator;
 import com.jvm_bloggers.entities.blog.Blog;
 import com.jvm_bloggers.entities.blog_post.BlogPost;
 import com.jvm_bloggers.entities.newsletter_issue.NewsletterIssue;
 
+import io.micrometer.core.instrument.util.StringUtils;
 import io.vavr.collection.List;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+import org.jsoup.internal.StringUtil;
 import org.springframework.stereotype.Component;
 import org.stringtemplate.v4.ST;
 
 import java.util.Objects;
+import java.util.Random;
 
 import static lombok.AccessLevel.PACKAGE;
 
@@ -31,6 +35,12 @@ class TweetContentGenerator {
     private static final String SHORT_MESSAGE_TEMPLATE =
         "Nowy numer #<number> już online - <link> z postami między innymi <personal>"
             + "<if(company)> i <company><endif> #java #jvm";
+
+    private static final ImmutableList<String> NEW_AUTHOR_MESSAGE_TEMPLATES = ImmutableList.of(
+            "<name> dodał bloga do listy, witamy na pokładzie #java #jvm",
+            "Witamy nowego autora, <name>! #java #jvm",
+            "Miło nam ogłosić, że <name> dołączył do listy autorów #java #jvm");
+
 
     private final LinkGenerator linkGenerator;
 
@@ -75,6 +85,13 @@ class TweetContentGenerator {
         } else {
             return tweetContent;
         }
+    }
+
+    public String generateNewBloggerTweetContent(Blog blog) {
+        final String name = StringUtils.isNotBlank(blog.getTwitter()) ? blog.getTwitter() : blog.getAuthor();
+        final ST template = new ST(NEW_AUTHOR_MESSAGE_TEMPLATES.get(new Random().nextInt(2)));
+        template.add("name", name);
+        return template.render();
     }
 
     private boolean tweetIsTooLong(String tweetContent, int originalIssuesLinkLength) {

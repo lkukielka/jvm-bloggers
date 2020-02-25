@@ -10,6 +10,7 @@ import io.vavr.control.Option;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Component;
 
 import static com.jvm_bloggers.entities.blog.BlogType.PERSONAL;
@@ -23,6 +24,7 @@ public class BloggersDataUpdater {
     private final NowProvider nowProvider;
     private final SyndFeedProducer syndFeedFactory;
     private final BloggerChangedVerifier bloggerChangedVerifier;
+    private final ApplicationEventPublisher eventPublisher;
 
     public UpdateStatistic updateData(BloggersData data) {
         return data.getBloggers()
@@ -88,6 +90,7 @@ public class BloggersDataUpdater {
             .moderationRequired(bloggerEntry.getBlogType() != PERSONAL)
             .build();
         blogRepository.save(newBlog);
+        eventPublisher.publishEvent(new NewBlogAdded(newBlog));
         return UpdateStatus.CREATED;
     }
 }

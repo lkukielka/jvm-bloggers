@@ -1,6 +1,7 @@
 package com.jvm_bloggers.core.social.twitter
 
 import com.jvm_bloggers.core.blogpost_redirect.LinkGenerator
+import com.jvm_bloggers.core.data_fetching.blogs.NewBlogAdded
 import com.jvm_bloggers.core.newsletter_issues.NewIssuePublished
 import com.jvm_bloggers.entities.blog.Blog
 import com.jvm_bloggers.entities.blog.BlogType
@@ -53,6 +54,24 @@ class TweetProducerSpec extends Specification {
 
         then:
         1 * tweetRepository.save({ it.content.contains(LINK) })
+    }
+
+    def "Should save a new Twitter post for a given blog"() {
+        given:
+        TweetContentGenerator contentGenerator = new TweetContentGenerator(linkGenerator)
+        TweetRepository tweetRepository = Mock(TweetRepository)
+
+        and:
+        NewBlogAdded newBlogAdded = new NewBlogAdded(blog("@personal1", PERSONAL))
+
+        and:
+        TweetProducer tweetProducer = new TweetProducer(contentGenerator, tweetRepository, nowProvider)
+
+        when:
+        tweetProducer.handleNewBloggerEvent(newBlogAdded)
+
+        then:
+        1 * tweetRepository.save({it.content.cointains(newBlogAdded.blog.author)})
     }
 
     private Collection<BlogPost> posts() {
